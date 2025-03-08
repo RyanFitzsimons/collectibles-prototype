@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collectibles Manager</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Collectibles Manager</h1>
+  <nav>
+    <button onclick="showSection('add-item')">Add Item</button>
+    <button onclick="showSection('add-transaction')">Add Transaction</button>
+    <button onclick="showSection('profit-report')">Profit Report</button>
+    <button onclick="showSection('tax-report')">Tax Report</button>
+    <button onclick="showSection('vat-return')">VAT Return</button>
+  </nav>
+
+  <section id="add-item" class="section">
+    <h2>Add Inventory Item</h2>
+    <form id="item-form">
+      <label>Name: <input type="text" name="name" required></label><br>
+      <label>Category: <input type="text" name="category" value="Video Games" required></label><br>
+      <label>Platform: <input type="text" name="platform" value="Nintendo Switch" required></label><br>
+      <label>Region: <input type="text" name="region" value="PAL" required></label><br>
+      <label>Packaging: <input type="text" name="packaging" value="Complete in Box" required></label><br>
+      <label>Edition (optional): <input type="text" name="edition"></label><br>
+      <label>Value: <input type="number" name="value" step="0.01" value="0.00" required></label><br>
+      <label>Cost Price: <input type="number" name="cost_price" step="0.01" value="0.00" required></label><br>
+      <label>Input VAT: <input type="number" name="input_vat" step="0.01" value="0.00"></label><br>
+      <label>Condition Type:
+        <select name="condition_type" required onchange="toggleCIBFields(this)">
+          <option value="Loose">Loose</option>
+          <option value="CIB" selected>CIB</option>
+          <option value="Sealed">Sealed</option>
+        </select>
+      </label><br>
+      <div id="cib-fields">
+        <label>Condition Value: <input type="text" name="condition_value" value="Good" required></label><br>
+        <label>Box Condition: <input type="text" name="box" value="Good" required></label><br>
+        <label>Disc Condition: <input type="text" name="disc" value="Mint" required></label><br>
+        <label>Manual: <input type="text" name="manual" value="Present" required></label><br>
+      </div>
+      <button type="submit">Add Item</button>
+    </form>
+    <div id="item-result"></div>
+  </section>
+
+  <section id="add-transaction" class="section" style="display: none;">
+    <h2>Add Transaction</h2>
+    <form id="transaction-form">
+      <label>Type: <input type="text" name="type" value="Sale" required></label><br>
+      <label>Total Value: <input type="number" name="total_value" step="0.01" required></label><br>
+      <label>Payment Method: <input type="text" name="payment_method" value="Cash" required></label><br>
+      <label>Cash Amount: <input type="number" name="cash_amount" step="0.01" required></label><br>
+      <label>Item ID: <input type="number" name="item_id" required></label><br>
+      <label>Price: <input type="number" name="price" step="0.01" required></label><br>
+      <button type="submit">Add Transaction</button>
+    </form>
+    <div id="transaction-result"></div>
+  </section>
+
+  <section id="profit-report" class="section" style="display: none;">
+    <h2>Profit Report</h2>
+    <button onclick="fetchProfitReport()">Refresh</button>
+    <table id="profit-table">
+      <thead>
+        <tr><th>ID</th><th>Name</th><th>Category</th><th>Cost</th><th>Sold Price</th><th>Profit</th><th>VAT</th><th>Date</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="tax-report" class="section" style="display: none;">
+    <h2>Tax Report</h2>
+    <button onclick="fetchTaxReport()">Refresh</button>
+    <div id="tax-result"></div>
+  </section>
+
+  <section id="vat-return" class="section" style="display: none;">
+    <h2>VAT Return</h2>
+    <form id="vat-form">
+      <label>Year: <input type="number" name="year" value="2025" required></label>
+      <label>Quarter: <select name="quarter" required>
+        <option value="1">Q1 (Apr-Jun)</option>
+        <option value="2">Q2 (Jul-Sep)</option>
+        <option value="3">Q3 (Oct-Dec)</option>
+        <option value="4" selected>Q4 (Jan-Mar)</option>
+      </select></label>
+      <button type="submit">Get VAT Return</button>
+    </form>
+    <div id="vat-result"></div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
