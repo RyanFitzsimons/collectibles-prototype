@@ -3,9 +3,6 @@ const db = new sqlite3.Database('./data/collectibles.db');
 
 // Initialize database schema
 db.serialize(() => {
-  // Drop existing inventory table to recreate with input_vat
-  db.run('DROP TABLE IF EXISTS inventory');
-
   // Inventory table with input_vat
   db.run(`
     CREATE TABLE inventory (
