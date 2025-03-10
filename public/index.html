@@ -12,7 +12,7 @@
   <!-- Navigation bar with buttons to switch between sections -->
   <nav>
     <!-- Each button triggers showSection() in script.js to display the corresponding section -->
-    <button onclick="showSection('add-item')">Add Item</button>
+    <button onclick="showSection('add-item')">Buy</button>
     <button onclick="showSection('add-transaction')">Add Transaction</button>
     <button onclick="showSection('profit-report')">Profit Report</button>
     <button onclick="showSection('tax-report')">Tax Report</button>
@@ -21,7 +21,7 @@
 
   <!-- Section for adding new inventory items; visible by default -->
   <section id="add-item" class="section">
-    <h2>Add Inventory Item</h2>
+    <h2>Buy</h2>
     <form id="item-form">
       <label>Name: <input type="text" name="name" required></label><br>
       <label>Category: <input type="text" name="category" value="Video Games" required></label><br>
@@ -52,7 +52,7 @@
 
   <!-- Section for adding transactions; hidden by default -->
   <section id="add-transaction" class="section" style="display: none;">
-    <h2>Add Transaction</h2>
+    <h2>Sell</h2>
     <form id="transaction-form">
       <label>Type: <input type="text" name="type" value="Sale" required></label><br>
       <label>Total Value: <input type="number" name="total_value" step="0.01" required></label><br>
