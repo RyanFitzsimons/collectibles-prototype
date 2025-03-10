@@ -1,3 +1,5 @@
+// server.js: A Node.js/Express server handling API endpoints for the frontend.
+
 const express = require('express');
 const { promisify } = require('util');
 const path = require('path');
@@ -11,12 +13,12 @@ app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
 const dbAll = promisify(db.all.bind(db));
 const dbGet = promisify(db.get.bind(db));
 
-// Root route
+// Root route - Serves index.html
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Add Inventory Item
+// Add Inventory Item - dds an item to inventory, validates via validateInventoryItem, stores JSON fields (e.g., attributes).
 app.post('/items', (req, res) => {
   const item = req.body;
   try {
@@ -57,7 +59,7 @@ app.post('/items', (req, res) => {
   }
 });
 
-// Record Transaction
+// Record Transaction - Records a transaction, calculates VAT (16.67% of margin if VAT-registered), links items via transaction_items
 app.post('/transactions', async (req, res) => {
   const tx = req.body;
   const taxStatus = await dbGet('SELECT * FROM tax_status WHERE status_id = 1');
@@ -98,7 +100,7 @@ app.post('/transactions', async (req, res) => {
   });
 });
 
-// Get Profit Report
+// Get Profit Report - Returns a profit report with cost, sold price, profit, and VAT per item.
 app.get('/profit-report', (req, res) => {
   db.all(`
     SELECT i.id, i.name, i.category, i.cost_price, i.modification_cost, ti.price, t.timestamp, t.vat_amount
@@ -121,7 +123,7 @@ app.get('/profit-report', (req, res) => {
   });
 });
 
-// Get Tax Report
+// Get Tax Report - Calculates profit, income tax, NICs, VAT, and rolling revenue for the tax year.
 app.get('/tax-report', async (req, res) => {
   try {
     const taxStatus = await dbGet('SELECT * FROM tax_status WHERE status_id = 1');
@@ -238,7 +240,7 @@ app.get('/tax-report', async (req, res) => {
   }
 });
 
-// VAT Return
+// VAT Return - Provides VAT details (output/input/net) for a specified year and quarter.
 app.get('/vat-return', async (req, res) => {
   try {
     const { year, quarter } = req.query;

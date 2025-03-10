@@ -1,3 +1,6 @@
+// inventory.js : Defines validation rules for inventory items by category and exports a validation function.
+
+// A detailed object (validationRules) specifying required/optional fields for categories
 const validationRules = {
     "Pokémon": {
       attributes: { required: ["set", "series", "number", "rarity", "language"], optional: [] },
@@ -84,7 +87,8 @@ const validationRules = {
     }
   };
   
-  function validateInventoryItem(item) {
+// Checks attributes, condition, and condition_history against category rules
+function validateInventoryItem(item) {
     const rules = validationRules[item.category];
     if (!rules) throw new Error(`Unknown category: ${item.category}`);
   
@@ -116,6 +120,6 @@ const validationRules = {
     });
   
     return true;
-  }
+}
   
-  module.exports = { validateInventoryItem };
+module.exports = { validateInventoryItem };

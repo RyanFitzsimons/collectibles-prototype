@@ -1,9 +1,13 @@
+// script.js: Handles client-side logic, form submissions, and UI updates by interacting with a backend API.
+
+//Toggles visibility of sections.
 function showSection(sectionId) {
     document.querySelectorAll('.section').forEach(section => {
       section.style.display = section.id === sectionId ? 'block' : 'none';
     });
   }
   
+  //Shows/hides CIB-specific fields based on condition_type
   function toggleCIBFields(select) {
     const cibFields = document.getElementById('cib-fields');
     cibFields.style.display = select.value === 'CIB' ? 'block' : 'none';
@@ -84,6 +88,7 @@ function showSection(sectionId) {
     }
   });
   
+  //Fetches data from /profit-report, populates a table.
   async function fetchProfitReport() {
     try {
       const res = await fetch('/profit-report');
@@ -109,6 +114,7 @@ function showSection(sectionId) {
     }
   }
   
+  //Fetches from /tax-report, displays profit, tax, VAT, etc
   async function fetchTaxReport() {
     try {
       const res = await fetch('/tax-report');

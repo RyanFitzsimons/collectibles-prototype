@@ -1,11 +1,20 @@
+//db.js: Sets up and exports a SQLite database connection for collectibles.db.
+
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./data/collectibles.db');
+
+/* Schema:
+inventory: Stores collectibles with fields like id, name, attributes (JSON), condition (JSON), value, cost_price, input_vat, etc.
+transactions: Records transactions (e.g., sales) with tx_id, type, total_value, vat_amount, etc.
+transaction_items: Links transactions to inventory items, tracking item_id, price, and direction (e.g., "Out" for sales).
+inventory_adjustments: Logs changes to item values (e.g., damage or revaluation).
+tax_status: Tracks VAT registration and revenue threshold, seeded with initial data (VAT reg: 2025-03-01, threshold: £90,000) */
 
 // Initialize database schema
 db.serialize(() => {
   // Inventory table with input_vat
   db.run(`
-    CREATE TABLE inventory (
+    CREATE TABLE IF NOT EXISTS inventory (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       attributes TEXT,
