@@ -3,13 +3,14 @@
 const express = require('express');
 const { promisify } = require('util');
 const path = require('path');
-const db = require('./db');
-const { validateInventoryItem } = require('./inventory');
+const db = require('./db'); // Imports SQLite database connection
+const { validateInventoryItem } = require('./inventory'); // Imports item validation
 
 const app = express();
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
+app.use(express.json()); // Parses incoming JSON requests
+app.use(express.static(path.join(__dirname, 'public'))); // Serves static files from public/
 
+// Promisifies database methods for async/await usage
 const dbAll = promisify(db.all.bind(db));
 const dbGet = promisify(db.get.bind(db));
 
@@ -22,7 +23,7 @@ app.get('/', (req, res) => {
 app.post('/items', (req, res) => {
   const item = req.body;
   try {
-    validateInventoryItem(item);
+    validateInventoryItem(item); // Ensures item meets category rules
     const sql = `
       INSERT INTO inventory (name, attributes, condition, condition_history, tags, category, value, 
         value_last_updated, value_history, cost_price, modification_cost, input_vat, acquisition, 
@@ -50,12 +51,13 @@ app.post('/items', (req, res) => {
       item.image || null,
       item.notes || null
     ];
+    // Inserts item into database
     db.run(sql, params, function (err) {
       if (err) return res.status(500).json({ error: err.message });
-      res.status(201).json({ id: this.lastID, ...item });
+      res.status(201).json({ id: this.lastID, ...item }); // Returns new item ID
     });
   } catch (e) {
-    res.status(400).json({ error: e.message });
+    res.status(400).json({ error: e.message }); // Returns validation errors
   }
 });
 
@@ -67,6 +69,7 @@ app.post('/transactions', async (req, res) => {
   const deregDate = taxStatus.vat_deregistration_date ? new Date(taxStatus.vat_deregistration_date) : null;
   const txDate = new Date(tx.timestamp || new Date());
 
+  // Calculates VAT if within VAT registration period
   if (regDate && txDate >= regDate && (!deregDate || txDate < deregDate)) {
     const inventory = await dbAll('SELECT * FROM inventory');
     let vatTotal = 0;
@@ -74,7 +77,7 @@ app.post('/transactions', async (req, res) => {
       if (ti.direction === 'Out') {
         const item = inventory.find(i => i.id === ti.item_id);
         const margin = ti.price - (item.cost_price + (item.modification_cost || 0));
-        if (margin > 0) vatTotal += Math.round(margin * 0.16666666666666666);
+        if (margin > 0) vatTotal += Math.round(margin * 0.16666666666666666); // VAT at 1/6 of margin
       }
     });
     tx.vat_applicable = 1;
@@ -89,6 +92,7 @@ app.post('/transactions', async (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
   const params = [tx.type, tx.total_value, tx.payment_method, tx.cash_amount, tx.timestamp || new Date().toISOString(), tx.vat_amount, tx.vat_applicable];
+  // Inserts transaction and links items
   db.run(sql, params, function (err) {
     if (err) return res.status(500).json({ error: err.message });
     const txId = this.lastID;
@@ -132,6 +136,7 @@ app.get('/tax-report', async (req, res) => {
     const inventory = await dbAll('SELECT * FROM inventory');
     const adjustments = await dbAll('SELECT * FROM inventory_adjustments');
 
+    // Determines tax year based on earliest transaction
     const earliestTxDate = transactions.length > 0 ? new Date(transactions[0].timestamp) : new Date();
     const taxYearStart = new Date(earliestTxDate.getFullYear(), 0, 1).toISOString().split('T')[0];
     const taxYearEnd = new Date(earliestTxDate.getFullYear() + 1, 0, 1).toISOString().split('T')[0];
@@ -141,6 +146,7 @@ app.get('/tax-report', async (req, res) => {
       items: transactionItems.filter(ti => ti.tx_id === tx.tx_id)
     }));
 
+    // Updates VAT for applicable transactions
     const regDate = taxStatus.vat_registration_date ? new Date(taxStatus.vat_registration_date) : null;
     const deregDate = taxStatus.vat_deregistration_date ? new Date(taxStatus.vat_deregistration_date) : null;
     txList.forEach(tx => {
@@ -160,6 +166,7 @@ app.get('/tax-report', async (req, res) => {
       }
     });
 
+    // Calculates revenue for the tax year
     const revenue = txList
       .filter(tx => tx.timestamp >= taxYearStart && tx.timestamp <= taxYearEnd && (tx.type === 'Sale' || tx.type === 'Trade-Out'))
       .reduce((sum, tx) => {
@@ -169,6 +176,7 @@ app.get('/tax-report', async (req, res) => {
         return sum + txRevenue;
       }, 0);
 
+      // Calculates cost of goods sold
     const soldItemIds = new Set();
     const costOfGoodsSold = txList
       .filter(tx => tx.timestamp >= taxYearStart && tx.timestamp <= taxYearEnd)
@@ -184,12 +192,14 @@ app.get('/tax-report', async (req, res) => {
         return sum;
       }, 0);
 
+      // Sums adjustment losses
     const adjustmentsLoss = adjustments
       .filter(adj => adj.date >= taxYearStart && adj.date <= taxYearEnd)
       .reduce((sum, adj) => sum + Math.abs(adj.value_change), 0);
 
     const profit = revenue - costOfGoodsSold - adjustmentsLoss;
 
+    // Applies UK 2025 tax rules
     const personalAllowance = profit > 100000 ? Math.max(12570 - ((profit - 100000) / 2), 0) : 12570;
     const taxableProfit = Math.max(profit - personalAllowance, 0);
     let incomeTax = 0;
@@ -199,18 +209,19 @@ app.get('/tax-report', async (req, res) => {
       const higherRateLimit = 125140 - personalAllowance;
 
       if (taxableProfit <= basicRateLimit) {
-        incomeTax = taxableProfit * 0.2;
+        incomeTax = taxableProfit * 0.2; // Basic rate
       } else if (taxableProfit <= higherRateLimit) {
-        incomeTax = (basicRateLimit * 0.2) + ((taxableProfit - basicRateLimit) * 0.4);
+        incomeTax = (basicRateLimit * 0.2) + ((taxableProfit - basicRateLimit) * 0.4); // Higher rate
       } else {
-        incomeTax = (basicRateLimit * 0.2) + ((higherRateLimit - basicRateLimit) * 0.4) + ((taxableProfit - higherRateLimit) * 0.45);
+        incomeTax = (basicRateLimit * 0.2) + ((higherRateLimit - basicRateLimit) * 0.4) + ((taxableProfit - higherRateLimit) * 0.45); // Additional rate
       }
     }
-
-    const class2NIC = profit > 6725 ? 179.40 : 0;
-    const class4NIC = taxableProfit <= 50270 ? taxableProfit * 0.09 : (50270 - 12570) * 0.09 + (taxableProfit - 50270) * 0.02;
+ 
+    const class2NIC = profit > 6725 ? 179.40 : 0; // Class 2 NIC flat rate
+    const class4NIC = taxableProfit <= 50270 ? taxableProfit * 0.09 : (50270 - 12570) * 0.09 + (taxableProfit - 50270) * 0.02; // Class 4 NIC
     const nics = class2NIC + class4NIC;
 
+    // Calculates VAT for the tax year
     const outputVat = txList
       .filter(tx => tx.vat_applicable && tx.timestamp >= taxYearStart && tx.timestamp <= taxYearEnd)
       .reduce((sum, tx) => sum + tx.vat_amount, 0);
@@ -219,6 +230,7 @@ app.get('/tax-report', async (req, res) => {
       .reduce((sum, item) => sum + (item.input_vat || 0), 0);
     const vat = outputVat - inputVat;
 
+    // Checks rolling 12-month revenue for VAT threshold
     const currentDate = new Date().toISOString();
     const startDate = new Date(currentDate);
     startDate.setFullYear(startDate.getFullYear() - 1);
@@ -252,22 +264,23 @@ app.get('/vat-return', async (req, res) => {
     const quarterNum = parseInt(quarter, 10);
     let startDate, endDate;
 
+    // Defines quarter periods (UK Stagger 1)
     switch (quarterNum) {
       case 1:
-        startDate = new Date(taxYear, 3, 1).toISOString().split('T')[0];
-        endDate = new Date(taxYear, 5, 30).toISOString().split('T')[0];
+        startDate = new Date(taxYear, 3, 1).toISOString().split('T')[0]; // Apr 1
+        endDate = new Date(taxYear, 5, 30).toISOString().split('T')[0]; // Jun 30
         break;
       case 2:
-        startDate = new Date(taxYear, 6, 1).toISOString().split('T')[0];
-        endDate = new Date(taxYear, 8, 30).toISOString().split('T')[0];
+        startDate = new Date(taxYear, 6, 1).toISOString().split('T')[0]; // Jul 1
+        endDate = new Date(taxYear, 8, 30).toISOString().split('T')[0]; // Sep 30
         break;
       case 3:
-        startDate = new Date(taxYear, 9, 1).toISOString().split('T')[0];
-        endDate = new Date(taxYear, 11, 31).toISOString().split('T')[0];
+        startDate = new Date(taxYear, 9, 1).toISOString().split('T')[0]; // Oct 1
+        endDate = new Date(taxYear, 11, 31).toISOString().split('T')[0]; // Dec 31
         break;
       case 4:
-        startDate = new Date(taxYear, 0, 1).toISOString().split('T')[0];
-        endDate = new Date(taxYear, 2, 31).toISOString().split('T')[0];
+        startDate = new Date(taxYear, 0, 1).toISOString().split('T')[0]; // Jan 1
+        endDate = new Date(taxYear, 2, 31).toISOString().split('T')[0]; // Mar 31
         break;
     }
 
@@ -308,4 +321,5 @@ app.get('/vat-return', async (req, res) => {
   }
 });
 
+// Starts the server on port 3000
 app.listen(3000, () => console.log('Server running on port 3000'));

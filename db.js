@@ -1,7 +1,7 @@
 //db.js: Sets up and exports a SQLite database connection for collectibles.db.
 
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./data/collectibles.db');
+const sqlite3 = require('sqlite3').verbose(); // Imports SQLite with verbose logging
+const db = new sqlite3.Database('./data/collectibles.db'); // Connects to the database file
 
 /* Schema:
 inventory: Stores collectibles with fields like id, name, attributes (JSON), condition (JSON), value, cost_price, input_vat, etc.
@@ -10,9 +10,9 @@ transaction_items: Links transactions to inventory items, tracking item_id, pric
 inventory_adjustments: Logs changes to item values (e.g., damage or revaluation).
 tax_status: Tracks VAT registration and revenue threshold, seeded with initial data (VAT reg: 2025-03-01, threshold: £90,000) */
 
-// Initialize database schema
+// Ensures schema commands run sequentially
 db.serialize(() => {
-  // Inventory table with input_vat
+  // Creates inventory table for collectibles with detailed fields
   db.run(`
     CREATE TABLE IF NOT EXISTS inventory (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +38,7 @@ db.serialize(() => {
     )
   `);
 
-  // Transactions table
+  // Creates transactions table for sales/purchases
   db.run(`
     CREATE TABLE IF NOT EXISTS transactions (
       tx_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,7 +59,7 @@ db.serialize(() => {
     )
   `);
 
-  // Transaction Items table
+  // Links transactions to inventory items
   db.run(`
     CREATE TABLE IF NOT EXISTS transaction_items (
       tx_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -73,7 +73,7 @@ db.serialize(() => {
     )
   `);
 
-  // Inventory Adjustments table
+  // Tracks adjustments to inventory values
   db.run(`
     CREATE TABLE IF NOT EXISTS inventory_adjustments (
       adjustment_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -85,7 +85,7 @@ db.serialize(() => {
     )
   `);
 
-  // Tax Status table - Create first, then seed
+  // Stores tax and VAT status
   db.run(`
     CREATE TABLE IF NOT EXISTS tax_status (
       status_id INTEGER PRIMARY KEY,
@@ -100,7 +100,7 @@ db.serialize(() => {
       console.error('Error creating tax_status table:', err.message);
       return;
     }
-    // Check and seed tax_status
+    // Seeds tax_status with default data if empty
     db.get('SELECT COUNT(*) as count FROM tax_status', (err, row) => {
       if (err) {
         console.error('Error checking tax_status count:', err.message);
@@ -118,4 +118,5 @@ db.serialize(() => {
   });
 });
 
+// Exports the database connection for use in other modules
 module.exports = db;

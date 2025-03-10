@@ -90,8 +90,9 @@ const validationRules = {
 // Checks attributes, condition, and condition_history against category rules
 function validateInventoryItem(item) {
     const rules = validationRules[item.category];
-    if (!rules) throw new Error(`Unknown category: ${item.category}`);
+    if (!rules) throw new Error(`Unknown category: ${item.category}`); // Ensures category is supported
   
+    // Validates attributes
     const attrRules = rules.attributes;
     const missingAttrs = attrRules.required.filter(key => !(key in item.attributes));
     if (missingAttrs.length > 0) throw new Error(`Missing required attributes: ${missingAttrs}`);
@@ -100,6 +101,7 @@ function validateInventoryItem(item) {
     );
     if (invalidAttrs.length > 0) throw new Error(`Invalid attributes: ${invalidAttrs}`);
   
+    // Validates condition
     const condRules = rules.condition;
     const missingCond = condRules.required.filter(key => !(key in item.condition));
     if (missingCond.length > 0) throw new Error(`Missing required condition fields: ${missingCond}`);
@@ -112,6 +114,7 @@ function validateInventoryItem(item) {
       if (missingType.length > 0) throw new Error(`Missing type-specific fields: ${missingType}`);
     }
   
+    // Validates condition history entries
     item.condition_history.forEach((entry, index) => {
       const histTypeRules = condRules.typeRules ? condRules.typeRules[entry.type] : condRules;
       if (condRules.typeRules && !histTypeRules) throw new Error(`Invalid history type at ${index}: ${entry.type}`);
@@ -119,7 +122,7 @@ function validateInventoryItem(item) {
       if (missingHist.length > 0) throw new Error(`Missing history fields at ${index}: ${missingHist}`);
     });
   
-    return true;
+    return true; // Returns true if all validations pass
 }
   
 module.exports = { validateInventoryItem };

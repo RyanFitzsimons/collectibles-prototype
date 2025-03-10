@@ -1,30 +1,38 @@
+/* General body styling for readability and layout */
 body {
     font-family: Arial, sans-serif;
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
+    max-width: 800px; /* Limits content width for better focus */
+    margin: 0 auto; /* Centers the content horizontally */
+    padding: 20px; /* Adds breathing room around edges */
   }
+
+  /* Styles navigation buttons for consistent spacing and appearance */
   nav button {
-    margin: 0 10px 10px 0;
-    padding: 5px 10px;
+    margin: 0 10px 10px 0; /* Right and bottom spacing between buttons */
+    padding: 5px 10px; /* Internal padding for clickability */
   }
+  /* Adds spacing between sections */
   .section {
     margin-top: 20px;
   }
+  /* Displays form labels as blocks for vertical stacking */
   form label {
     display: block;
-    margin: 10px 0;
+    margin: 10px 0; /* Vertical spacing between form fields */
   }
+  /* Vertical spacing between form fields */
   table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
+    width: 100%; /* Fills available width */
+    border-collapse: collapse; /* Removes gaps between borders */
+    margin-top: 10px; /* Space above table */
   }
+  /* Applies borders and padding to table cells */
   th, td {
-    border: 1px solid #ccc;
-    padding: 5px;
-    text-align: left;
+    border: 1px solid #ccc; /* Light gray borders */
+    padding: 5px; /* Internal spacing */
+    text-align: left; /* Left-aligns text for consistency */
   }
+  /* Highlights table headers with a light background */
   th {
     background-color: #f0f0f0;
   }
